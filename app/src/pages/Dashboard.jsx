@@ -57,6 +57,7 @@ function SimButton({ label, onClick, color, loading, disabled }) {
 
 export default function Dashboard() {
   const [state, setState] = useState(null)
+  const [contracts, setContracts] = useState(null)
   const [logs, setLogs] = useState([])
   const [decisions, setDecisions] = useState([])
   const [loading, setLoading] = useState({})
@@ -65,6 +66,7 @@ export default function Dashboard() {
   useEffect(() => {
     fetch('/api/state').then(r => r.json()).then(setState)
     fetch('/api/history').then(r => r.json()).then(setDecisions)
+    fetch('/api/contracts').then(r => r.json()).then(setContracts).catch(() => {})
 
     const es = new EventSource('/api/stream')
     es.addEventListener('state', (e) => setState(JSON.parse(e.data)))
@@ -112,11 +114,18 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', borderRadius: '20px', background: 'rgba(34, 197, 94, 0.15)', color: 'var(--success)' }}>
-            Starknet Sepolia
+            Starknet Sepolia · LIVE
           </span>
-          <span style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', borderRadius: '20px', background: 'var(--accent-dim)', color: 'var(--accent)' }}>
-            Mock Aave Pool
-          </span>
+          {contracts && (
+            <>
+              <a href={contracts.poolUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', borderRadius: '20px', background: 'var(--accent-dim)', color: 'var(--accent)', textDecoration: 'none' }}>
+                Pool ↗
+              </a>
+              <a href={contracts.governorUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', padding: '0.3rem 0.6rem', borderRadius: '20px', background: 'var(--accent-dim)', color: 'var(--accent)', textDecoration: 'none' }}>
+                Governor ↗
+              </a>
+            </>
+          )}
         </div>
       </div>
 
@@ -190,7 +199,7 @@ export default function Dashboard() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Time', 'Action', 'LTV', 'Liq Threshold', 'Emergency', 'Status', 'Reasoning'].map(h => (
+                  {['Time', 'Action', 'LTV', 'Liq Threshold', 'Emergency', 'Status', 'TX', 'Reasoning'].map(h => (
                     <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.7rem', textTransform: 'uppercase' }}>{h}</th>
                   ))}
                 </tr>
@@ -222,6 +231,13 @@ export default function Dashboard() {
                       <span style={{ color: d.accepted ? 'var(--success)' : 'var(--danger)', fontSize: '0.75rem' }}>
                         {d.accepted ? 'ACCEPTED' : 'REJECTED'}
                       </span>
+                    </td>
+                    <td className="mono" style={{ padding: '0.5rem 0.75rem', fontSize: '0.7rem' }}>
+                      {d.voyagerUrl ? (
+                        <a href={d.voyagerUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>
+                          {d.txHash.slice(0, 6)}...{d.txHash.slice(-4)} ↗
+                        </a>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
                     <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.reasoning}</td>
                   </tr>

@@ -1,0 +1,19 @@
+{
+  "network": "sepolia",
+  "rpc_url": "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/_zuaFihvvIkJ2dwMdRZ0_",
+  "deployer": "0x072f0d2391f7ce9103d31a64b6a36e0fe8d32f908d2e183a02d9d46403b21ce2",
+  "agent_address": "0x1f8975c5a1c6d2764bd30dddf4d6ab80c59e8287e5f796a5ba2490dcbf2dab6",
+  "contracts": {
+    "MockAavePool": "0x06ef0863a1353770bf483bf57e8623b262ccccdfbf183cdd086d45bbcdf85fac",
+    "RiskGovernor": "0x00726210f3763cb4cfffb6c6a41526a85afe47a87a8a38b2000cb96e6e569c9a"
+  },
+  "class_hashes": {
+    "MockAavePool": "0x685314879d0f15bf2dd25a67acb7840861cbadd826f990f01a7b1161a2f202f",
+    "RiskGovernor": "0x435d05ea6f32421afb3d51ed508ceecfd03c1c9b4898fd93677612547c93fdf",
+    "MockPriceOracle": "0x304359e78b108f60219092093eda2075964d1a757e1258e2558e86d73aa6693"
+  },
+  "explorer": {
+    "pool": "https://sepolia.voyager.online/contract/0x06ef0863a1353770bf483bf57e8623b262ccccdfbf183cdd086d45bbcdf85fac",
+    "governor": "https://sepolia.voyager.online/contract/0x00726210f3763cb4cfffb6c6a41526a85afe47a87a8a38b2000cb96e6e569c9a"
+  }
+}

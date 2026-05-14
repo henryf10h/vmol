@@ -5,6 +5,14 @@ import OpenAI from "openai";
 
 dotenv.config();
 
+import {
+  proposeParameters,
+  voyagerUrl,
+  voyagerContractUrl,
+  POOL_ADDRESS,
+  GOVERNOR_ADDRESS,
+} from "./starknet.js";
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -237,22 +245,34 @@ Decide. Respond with ONE JSON object.`;
     decision.accepted = true;
     broadcast("log", { type: "decision", message: `HOLD — ${reasoning}` });
   } else {
+    const EPS = 1e-9;
     let violation = "";
-    if (newLtv > newLiqThreshold) violation = "LTV > liq_threshold";
-    else if (newLtv < GUARD.ltvMin || newLtv > GUARD.ltvMax) violation = "LTV out of bounds";
-    else if (newLiqThreshold < GUARD.liqThresholdMin || newLiqThreshold > GUARD.liqThresholdMax) violation = "Liq threshold out of bounds";
-    else if (Math.abs(newLtv - poolState.ltv) > GUARD.maxLtvDelta) violation = "LTV delta too large";
-    else if (Math.abs(newLiqThreshold - poolState.liqThreshold) > GUARD.maxLiqThresholdDelta) violation = "Liq threshold delta too large";
+    if (newLtv > newLiqThreshold + EPS) violation = "LTV > liq_threshold";
+    else if (newLtv < GUARD.ltvMin - EPS || newLtv > GUARD.ltvMax + EPS) violation = "LTV out of bounds";
+    else if (newLiqThreshold < GUARD.liqThresholdMin - EPS || newLiqThreshold > GUARD.liqThresholdMax + EPS) violation = "Liq threshold out of bounds";
+    else if (Math.abs(newLtv - poolState.ltv) > GUARD.maxLtvDelta + EPS) violation = "LTV delta too large";
+    else if (Math.abs(newLiqThreshold - poolState.liqThreshold) > GUARD.maxLiqThresholdDelta + EPS) violation = "Liq threshold delta too large";
 
     if (violation) {
-      broadcast("log", { type: "error", message: `REJECTED: ${violation}` });
+      broadcast("log", { type: "error", message: `REJECTED (off-chain pre-check): ${violation}` });
     } else {
-      decision.accepted = true;
-      poolState.ltv = newLtv;
-      poolState.liqThreshold = newLiqThreshold;
-      poolState.guardUpdateCount++;
-      recalcPoolMetrics();
-      broadcast("log", { type: "success", message: `ACCEPTED: LTV ${(decision.oldLtv * 100).toFixed(1)}% → ${(newLtv * 100).toFixed(1)}%, Liq ${(decision.oldLiqThreshold * 100).toFixed(1)}% → ${(newLiqThreshold * 100).toFixed(1)}%` });
+      // Submit on-chain tx via RiskGovernor.propose_parameters
+      try {
+        broadcast("log", { type: "info", message: `Submitting tx to RiskGovernor on Starknet Sepolia...` });
+        const { txHash } = await proposeParameters(newLtv, newLiqThreshold, isEmergency);
+        (decision as any).txHash = txHash;
+        (decision as any).voyagerUrl = voyagerUrl(txHash);
+        decision.accepted = true;
+        poolState.ltv = newLtv;
+        poolState.liqThreshold = newLiqThreshold;
+        poolState.guardUpdateCount++;
+        recalcPoolMetrics();
+        broadcast("log", { type: "success", message: `ON-CHAIN: LTV ${(decision.oldLtv * 100).toFixed(1)}% → ${(newLtv * 100).toFixed(1)}%, Liq ${(decision.oldLiqThreshold * 100).toFixed(1)}% → ${(newLiqThreshold * 100).toFixed(1)}%` });
+        broadcast("log", { type: "tx", message: `TX: ${voyagerUrl(txHash)}` });
+      } catch (e: any) {
+        console.error("On-chain tx error:", e);
+        broadcast("log", { type: "error", message: `On-chain tx failed: ${e.message?.slice(0, 200) || String(e).slice(0, 200)}` });
+      }
     }
   }
 
@@ -265,6 +285,16 @@ Decide. Respond with ONE JSON object.`;
 // ============================================================================
 // API Routes
 // ============================================================================
+
+app.get("/api/contracts", (_req, res) => {
+  res.json({
+    network: "Starknet Sepolia",
+    pool: POOL_ADDRESS,
+    governor: GOVERNOR_ADDRESS,
+    poolUrl: voyagerContractUrl(POOL_ADDRESS),
+    governorUrl: voyagerContractUrl(GOVERNOR_ADDRESS),
+  });
+});
 
 app.get("/api/state", (_req, res) => {
   res.json(poolState);
@@ -329,33 +359,23 @@ app.post("/api/cheat/reset", (_req, res) => {
 app.post("/api/demo/crash", async (_req, res) => {
   broadcast("log", { type: "info", message: "Starting crash demo sequence..." });
 
-  // Step 1: Initial state
-  await delay(1000);
-  broadcast("log", { type: "info", message: "Step 1/5: Reading initial pool state" });
-  await runAgentCycle();
-
-  // Step 2: ETH drops -10%
-  await delay(2000);
+  // Step 1: Initial market shock
+  await delay(800);
   poolState.ethPrice *= 0.90;
   recalcPoolMetrics();
-  broadcast("log", { type: "market", message: `Step 2/5: ETH crash -10% → $${poolState.ethPrice.toFixed(0)}` });
+  broadcast("log", { type: "market", message: `Step 1/3: ETH crash -10% → $${poolState.ethPrice.toFixed(0)}` });
   broadcast("state", poolState);
 
-  // Step 3: Agent reacts
-  await delay(2000);
-  broadcast("log", { type: "info", message: "Step 3/5: Agent analyzing crash..." });
-  await runAgentCycle();
-
-  // Step 4: ETH drops another -15%
-  await delay(2000);
+  // Step 2: Severe crash
+  await delay(1200);
   poolState.ethPrice *= 0.85;
   recalcPoolMetrics();
-  broadcast("log", { type: "market", message: `Step 4/5: ETH crash -15% → $${poolState.ethPrice.toFixed(0)}` });
+  broadcast("log", { type: "market", message: `Step 2/3: ETH crash -15% more → $${poolState.ethPrice.toFixed(0)}` });
   broadcast("state", poolState);
 
-  // Step 5: Agent reacts to severe crash
-  await delay(2000);
-  broadcast("log", { type: "info", message: "Step 5/5: Agent analyzing severe crash..." });
+  // Step 3: Agent reacts to the full crash (single LLM call)
+  await delay(800);
+  broadcast("log", { type: "info", message: "Step 3/3: Agent analyzing crash and proposing risk adjustment..." });
   const finalDecision = await runAgentCycle();
 
   broadcast("log", { type: "info", message: "Demo sequence complete." });
