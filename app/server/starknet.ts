@@ -1,11 +1,23 @@
+import "dotenv/config";
 import { Account, RpcProvider, CallData, uint256, cairo } from "starknet";
 
-const RPC_URL = "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/_zuaFihvvIkJ2dwMdRZ0_";
-const AGENT_ADDRESS = "0x1f8975c5a1c6d2764bd30dddf4d6ab80c59e8287e5f796a5ba2490dcbf2dab6";
-const AGENT_PRIVATE_KEY = "0xbeeeb0e3f13b59cc5360498201dfd3933a6863f4618b3cad073f85b1f1288";
+// Env vars override defaults — set these in the Render/Vercel dashboard.
+const RPC_URL =
+  process.env.STARKNET_RPC_URL ||
+  "https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/_zuaFihvvIkJ2dwMdRZ0_";
+const AGENT_ADDRESS =
+  process.env.AGENT_ADDRESS ||
+  "0x1f8975c5a1c6d2764bd30dddf4d6ab80c59e8287e5f796a5ba2490dcbf2dab6";
+const AGENT_PRIVATE_KEY =
+  process.env.AGENT_PRIVATE_KEY ||
+  "0xbeeeb0e3f13b59cc5360498201dfd3933a6863f4618b3cad073f85b1f1288";
 
-export const POOL_ADDRESS = "0x06ef0863a1353770bf483bf57e8623b262ccccdfbf183cdd086d45bbcdf85fac";
-export const GOVERNOR_ADDRESS = "0x00726210f3763cb4cfffb6c6a41526a85afe47a87a8a38b2000cb96e6e569c9a";
+export const POOL_ADDRESS =
+  process.env.POOL_ADDRESS ||
+  "0x06ef0863a1353770bf483bf57e8623b262ccccdfbf183cdd086d45bbcdf85fac";
+export const GOVERNOR_ADDRESS =
+  process.env.GOVERNOR_ADDRESS ||
+  "0x00726210f3763cb4cfffb6c6a41526a85afe47a87a8a38b2000cb96e6e569c9a";
 
 export const provider = new RpcProvider({ nodeUrl: RPC_URL });
 

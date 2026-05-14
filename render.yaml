@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: vmol-protocol
+    runtime: node
+    rootDir: app
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/state
+    envVars:
+      # Secrets — set the actual values in the Render dashboard, not here.
+      - key: LLM_API_KEY
+        sync: false
+      - key: AGENT_PRIVATE_KEY
+        sync: false
+      # Non-secret config — safe to commit.
+      - key: LLM_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: LLM_MODEL
+        value: minimax/minimax-m2.5:free
+      - key: STARKNET_RPC_URL
+        value: https://starknet-sepolia.g.alchemy.com/starknet/version/rpc/v0_10/_zuaFihvvIkJ2dwMdRZ0_
+      - key: AGENT_ADDRESS
+        value: "0x1f8975c5a1c6d2764bd30dddf4d6ab80c59e8287e5f796a5ba2490dcbf2dab6"
+      - key: POOL_ADDRESS
+        value: "0x06ef0863a1353770bf483bf57e8623b262ccccdfbf183cdd086d45bbcdf85fac"
+      - key: GOVERNOR_ADDRESS
+        value: "0x00726210f3763cb4cfffb6c6a41526a85afe47a87a8a38b2000cb96e6e569c9a"

@@ -3,11 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "server": "tsx server/index.ts",
     "start:dev": "concurrently \"npm run server\" \"npm run dev\"",
-    "build": "vite build"
+    "build": "vite build",
+    "start": "tsx server/index.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -17,7 +21,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.8.1",
-    "starknet": "^10.0.2"
+    "starknet": "^10.0.2",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -27,7 +32,6 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.1.0",
-    "tsx": "^4.19.2",
     "typescript": "^5.5.4",
     "vite": "^7.3.1"
   }

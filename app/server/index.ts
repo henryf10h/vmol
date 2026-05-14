@@ -2,8 +2,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import {
   proposeParameters,
@@ -385,6 +389,18 @@ app.post("/api/demo/crash", async (_req, res) => {
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+// ============================================================================
+// Serve built frontend (production — single service for Render/Vercel)
+// ============================================================================
+
+const distPath = path.resolve(__dirname, "../dist");
+app.use(express.static(distPath));
+
+// SPA fallback — any non-API route returns index.html
+app.get(/^(?!\/api).*/, (_req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
 
 // ============================================================================
 // Start
