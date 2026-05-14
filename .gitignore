@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+*.log
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Cairo
+target/
+contracts/.snfoundry_cache/
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
